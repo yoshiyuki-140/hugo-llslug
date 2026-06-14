@@ -2,7 +2,7 @@
 
 `llslug` は、ローカルLLM（Ollama）を活用して、日本語の記事タイトルからURLフレンドリーな英語のケバブケース（Slug）を自動生成する、Hugo専用のCLI拡張ツール（プラグイン）です。
 
-Hugoの外部サブコマンド機構に対応しており、環境変数 `$PATH` に配置することで、お馴染みの `hugo` コマンドのサブコマンドとしてシームレスに実行できます。
+Hugoの外部サブコマンド機構に対応しており、環境変数 `$PATH` に配置することで、 `hugo` のサブコマンドとして実行できます。
 
 ## 使用方法
 
@@ -32,40 +32,52 @@ $
 
 ## 主な機能
 
-- **爆速のローカル推論**: `llama3.2:1b` や `gemma2:2b` などの軽量ローカルLLMに対応し、1秒未満でレスポンスを返します。
-- **Hugoとのシームレスな統合**: `hugo llslug` として実行可能（Cobraのプラグイン機構を利用）。
-- **クリーンアーキテクチャ採用**: LLMプラットフォームやプロトコルの変更に強い、疎結合でテスタブルなGoコード。
+- ローカル推論: 軽量ローカルLLMを使用し、レスポンスを返します。
+- Hugoとの統合**: `hugo llslug` として実行可能（Cobraのプラグイン機構を利用）。
 
 ## 前提条件
 
-1. **Ollama** がローカルマシンで起動していること。
-2. 使用する軽量LLMモデル（推奨: `llama3.2:1b`）がダウンロードされていること。
+1. Ollamaがローカルマシンにインストールされていること．
+2. 使用する軽量LLMモデル（推奨: `qwen3.5:0.8b`）がダウンロードされていること。
+
+    もしダウンロードされていなければダウンロードしてください．
    ```bash
-   ollama pull llama3.2:1b
+   ollama pull qwen3.5:0.8b
+   ```
 
 ## ディレクトリ構造
 
 ```bash
 hugo-llslug/
-├── .gitignore
+├── LICENSE
+├── Makefile                            # ビルド・インストール用タスク定義
+├── README.md
 ├── go.mod
 ├── go.sum
-├── main.go                     # エントリポイント
-├── cmd/                        # CobraのCLI層（Delivery / Presentation）
-│   ├── root.go                 # `hugo-llslug` ルートコマンド定義
-│   └── version.go              # サブコマンド例（バージョン表示など）
+├── main.go                             # エントリポイント（cmd.Execute() を呼び出すのみ）
 │
-└── internal/                   # 外部にエクスポートしないプライベートロジック
-    ├── domain/                 # 【Domain層】ビジネスルール・インターフェース定義
-    │   ├── slug.go             # スラッグ生成に関するインターフェース（LLMClient等）
-    │   └── model.go            # ドメインモデル（必要なら）
+├── cmd/                                # Cobraコマンド定義（Presentation層）
+│   └── root.go                         # ルートコマンド定義・フラグ設定・依存性の組み立て
+│
+└── internal/                           # 外部にエクスポートしないプライベートロジック
+    ├── domain/                         # ビジネスルール・インターフェース定義
+    │   ├── errors.go                   # ドメインエラー定数（バリデーション・ファイル読込系）
+    │   └── hugo.go                     # HugoExecutor / LLMClient インターフェース定義
     │
-    ├── usecase/                # 【Usecase層】アプリケーションロジック（依存性を持たない）
-    │   ├── slug_generator.go   # タイトルからスラッグを生成する一連の手順
-    │   └── slug_generator_test.go # ➔ ★ Usecaseの単体テスト
+    ├── usecase/                        # アプリケーションロジック
+    │   ├── prompts/
+    │   │   └── slug_generate_instruction.txt  # LLMへのシステムプロンプトテンプレート
+    │   ├── slug_generator.go           # タイトル→スラッグ候補生成のユースケース実装
+    │   └── slug_generator_test.go      # ユースケースの単体テスト
     │
-    └── adapter/                # 【Adapter層】外部インフラへの接続（依存性の外側）
-        └── ollama/             # Ollamaクライアントの実装
-            ├── client.go
-            └── client_test.go  # ➔ ★ API通信のモックテスト
+    └── adapter/                        # 外部インフラへの接続実装
+        ├── cli/                        # インタラクティブCLI入出力の処理
+        │   ├── runner.go               # ユーザーとの対話フロー制御（セクション・タイトル・スラッグ選択）
+        │   └── runner_test.go          # runner のテスト（stdin/stdout をモック）
+        ├── hugo/                       # Hugo コマンド実行アダプタ
+        │   ├── executor.go             # `hugo new` コマンドを実行する HugoExecutor 実装
+        │   └── executor_test.go        # executor のテスト
+        └── ollama/                     # Ollama クライアント実装
+            ├── client.go               # Ollamaコマンドを呼び出す LLMClient 実装
+            └── client_test.go          # API通信のモックテスト
 ```
