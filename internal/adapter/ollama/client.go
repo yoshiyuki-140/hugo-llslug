@@ -4,7 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+
+	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
 )
+
+// Goでは「代入先がインターフェース型のとき、右辺の型がそのインターフェースを満たしていなければコンパイルエラー」という規則がある。
+var _ domain.LLMClient = (*LLMClient)(nil)
 
 type slugResponse struct {
 	Slugs []string `json:"slugs"`
