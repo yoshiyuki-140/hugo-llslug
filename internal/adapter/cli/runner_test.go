@@ -35,15 +35,15 @@ func TestRunner_Run(t *testing.T) {
 	defaultSections := []string{"posts", "notes"}
 
 	tests := []struct {
-		name            string
-		input           string
-		sections        []string
-		slugs           []string
-		llmErr          error
-		hugoErr         error
-		wantSection     string
-		wantSlug        string
-		wantErr         bool
+		name        string
+		input       string
+		sections    []string
+		slugs       []string
+		llmErr      error
+		hugoErr     error
+		wantSection string
+		wantSlug    string
+		wantErr     bool
 	}{
 		{
 			name:        "セクションを番号で選択し、スラッグを番号で選択する",
