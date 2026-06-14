@@ -44,7 +44,7 @@ func (u *SlugUsecase) RunHugoNew(section string, selectedSlug string) error {
 		return domain.ErrInvalidSectionName
 	}
 	if strings.Contains(selectedSlug, "/") {
-		return domain.ErrInvalidSectionName
+		return domain.ErrInvalidSelectedSlug
 	}
 	return u.hugoExecutor.CreateNewPost(section, selectedSlug)
 }
