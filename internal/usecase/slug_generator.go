@@ -1,28 +1,50 @@
 package usecase
 
-import "github.com/yoshiyuki-140/hugo-llslug/internal/domain"
+import (
+	_ "embed"
+	"strings"
+
+	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
+)
+
+//go:embed prompts/slug_generate_instruction.txt
+var slugInstructionTemplate string
 
 type SlugUsecase struct {
-	LLMClient domain.LLMClient
+	llmClient    domain.LLMClient
+	hugoExecutor domain.HugoExecutor
 }
 
 // 外部からLLMClientをDIしてインスタンスを作成する
-func NewSlugUsecase(client domain.LLMClient) *SlugUsecase {
-	return &SlugUsecase{LLMClient: client}
+func NewSlugUsecase(client domain.LLMClient, hugo domain.HugoExecutor) *SlugUsecase {
+	return &SlugUsecase{llmClient: client, hugoExecutor: hugo}
 }
 
-// Executeはタイトルからスラッグを生成するビジネスロジック
-func (u *SlugUsecase) Execute(title string) (string, error) {
-	// タイトルのバリデーション
-	// TODO: nilではなくて適切なエラーを返却させる
+// タイトルから候補を5つ生成する
+func (u *SlugUsecase) GetCandidates(title string) ([]string, error) {
+	// バリデーション
 	if title == "" {
-		return "", nil
+		return nil, domain.ErrEmptyTitle
 	}
-	// LLMClientを使ってスラッグを生成
-	slug, err := u.LLMClient.GenerateSlug(title)
-	if err != nil {
-		return "", err
-	}
+	systemPrompt := strings.Replace(slugInstructionTemplate, "{{.ArticleTitle}}", title, 1)
+	// TODO: タイトルのトークン数がLLMのコンテキスト長で耐えれるかをバリデーション
+	return u.llmClient.GenerateSlugCandidates(systemPrompt)
+}
 
-	return slug, err
+// ユーザが選んだ最終結果を元にHugoを叩く
+func (u *SlugUsecase) RunHugoNew(section string, selectedSlug string) error {
+	// バリデーション
+	if section == "" {
+		return domain.ErrEmptySectionName
+	}
+	if selectedSlug == "" {
+		return domain.ErrEmptySelectedSlug
+	}
+	if strings.Contains(section, "/") {
+		return domain.ErrInvalidSectionName
+	}
+	if strings.Contains(selectedSlug, "/") {
+		return domain.ErrInvalidSectionName
+	}
+	return u.hugoExecutor.CreateNewPost(section, selectedSlug)
 }

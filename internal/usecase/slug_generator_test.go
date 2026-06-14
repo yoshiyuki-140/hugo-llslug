@@ -2,6 +2,7 @@
 package usecase_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
@@ -9,57 +10,148 @@ import (
 )
 
 type mockLLMClient struct {
-	mockResponse string
-	mockErr      error
+	mockResponses []string
+	mockErr       error
 }
 
-func (m *mockLLMClient) GenerateSlug(title string) (string, error) {
-	return m.mockResponse, m.mockErr
+type mockHugoExecutor struct {
+	mockErr error
 }
 
-func TestSlugUsecase_Execute(t *testing.T) {
-	mockllmClient := &mockLLMClient{
-		mockResponse: "test-slug",
-		mockErr:      nil,
-	}
+// モックの実装
+func (mlc *mockLLMClient) GenerateSlugCandidates(title string) ([]string, error) {
+	return mlc.mockResponses, mlc.mockErr
+}
 
-	// UsecaseにモックをDI
-	type fields struct {
-		LLMClient domain.LLMClient
-	}
-	type args struct {
-		title string
-	}
+func (mhe *mockHugoExecutor) CreateNewPost(section string, slug string) error {
+	return mhe.mockErr
+}
+
+// モックのインスタンス化
+var mockllmClient = &mockLLMClient{
+	mockResponses: []string{
+		"test-slug1",
+		"test-slug2",
+		"test-slug3",
+		"test-slug4",
+		"test-slug5",
+	},
+	mockErr: nil,
+}
+var mockhugoExecutor = &mockHugoExecutor{
+	mockErr: nil,
+}
+
+func TestSlugUsecase_GetCandidates(t *testing.T) {
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		client domain.LLMClient
+		hugo   domain.HugoExecutor
+		// Named input parameters for target function.
+		title   string
+		want    []string
 		wantErr bool
 	}{
 		{
-			name: "日本語の文字列に対応できる",
-			fields: fields{
-				LLMClient: mockllmClient,
+			name:   "候補を5つ生成できている",
+			client: mockllmClient,
+			hugo:   mockhugoExecutor,
+			title:  "テストタイトル",
+			want: []string{
+				"test-slug1",
+				"test-slug2",
+				"test-slug3",
+				"test-slug4",
+				"test-slug5",
 			},
-			args: args{
-				title: "テストタイトル",
-			},
-			want:    "test-slug",
 			wantErr: false,
+		},
+		{
+			name:    "タイトルが空文字の時はエラーを返す",
+			client:  mockllmClient,
+			hugo:    mockhugoExecutor,
+			title:   "",
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// uc:usecase
-			uc := usecase.NewSlugUsecase(tt.fields.LLMClient)
-			got, err := uc.Execute(tt.args.title)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SlugUsecase.Execute() error = %v, wantErr %v", err, tt.wantErr)
+			u := usecase.NewSlugUsecase(tt.client, tt.hugo)
+			got, gotErr := u.GetCandidates(tt.title) // テスト対象メソッドの呼び出し
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("GetCandidates() failed: %v", gotErr)
+				}
 				return
 			}
-			if got != tt.want {
-				t.Errorf("SlugUsecase.Execute() = %v, want %v", got, tt.want)
+			if tt.wantErr {
+				t.Fatal("GetCandidates() succeeded unexpectedly")
+			}
+			if !reflect.DeepEqual(tt.want, got) {
+				t.Errorf("GetCandidates() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSlugUsecase_RunHugoNew(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		client domain.LLMClient
+		hugo   domain.HugoExecutor
+		// Named input parameters for target function.
+		section      string
+		selectedSlug string
+		wantErr      bool
+	}{
+		{
+			name:         "コマンド実行結果はnilである",
+			client:       mockllmClient,
+			hugo:         mockhugoExecutor,
+			section:      "mock-section",
+			selectedSlug: "mock-selected-slug",
+			wantErr:      false,
+		},
+		{
+			name:         "セクション名が空文字の時はエラー",
+			client:       mockllmClient,
+			hugo:         mockhugoExecutor,
+			section:      "",
+			selectedSlug: "mock-selected-slug",
+			wantErr:      true,
+		},
+		{
+			name:         "セクション名にスラッシュ(`/`)を含むときはエラー",
+			client:       mockllmClient,
+			hugo:         mockhugoExecutor,
+			section:      "mock-/-section",
+			selectedSlug: "mock-slug",
+			wantErr:      true,
+		},
+		{
+			name:         "Slugにスラッシュ(`/`)を含むときはエラー",
+			client:       mockllmClient,
+			hugo:         mockhugoExecutor,
+			section:      "mock-section",
+			selectedSlug: "mock-/-slug",
+			wantErr:      true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := usecase.NewSlugUsecase(tt.client, tt.hugo)
+			gotErr := u.RunHugoNew(tt.section, tt.selectedSlug)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("RunHugoNew() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("RunHugoNew() succeeded unexpectedly")
 			}
 		})
 	}
