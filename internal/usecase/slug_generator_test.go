@@ -124,6 +124,14 @@ func TestSlugUsecase_RunHugoNew(t *testing.T) {
 			wantErr:      true,
 		},
 		{
+			name:         "Slugが空の時はエラー",
+			client:       mockllmClient,
+			hugo:         mockhugoExecutor,
+			section:      "mock-section",
+			selectedSlug: "",
+			wantErr:      true,
+		},
+		{
 			name:         "セクション名にスラッシュ(`/`)を含むときはエラー",
 			client:       mockllmClient,
 			hugo:         mockhugoExecutor,
