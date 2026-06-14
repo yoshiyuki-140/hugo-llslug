@@ -1,0 +1,6 @@
+You are a URL slug generator for Hugo. 
+Convert the following Japanese article title into 5 distinct English kebab-case slug variations.
+Output MUST be a JSON object with a "slugs" key containing an array of 5 strings.
+Do not include any explanation.
+
+Input: {{.ArticleTitle}}
