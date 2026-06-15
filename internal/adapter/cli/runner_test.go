@@ -101,6 +101,22 @@ func TestRunner_Run(t *testing.T) {
 			hugoErr:  errMockHugo,
 			wantErr:  true,
 		},
+		{
+			name:        "/redoを入力すると再生成されその後番号で選択できる",
+			input:       "1\ntest title\n/redo\n2\n",
+			sections:    defaultSections,
+			slugs:       defaultSlugs,
+			wantSection: "posts",
+			wantSlug:    "slug-two",
+		},
+		{
+			name:        "/redoを複数回入力しても最終的に選択できる",
+			input:       "1\ntest title\n/redo\n/redo\n1\n",
+			sections:    defaultSections,
+			slugs:       defaultSlugs,
+			wantSection: "posts",
+			wantSlug:    "slug-one",
+		},
 	}
 
 	for _, tt := range tests {

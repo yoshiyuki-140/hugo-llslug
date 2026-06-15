@@ -45,28 +45,37 @@ func (r *Runner) Run() error {
 	title, _ := r.reader.ReadString('\n')
 	title = strings.TrimSpace(title)
 
-	const maxRetries = 3
-	var candidates []string
-	for i := range maxRetries {
-		fmt.Fprintln(r.writer, "Generating ...")
-		candidates, err = r.uc.GetCandidates(title)
-		if err == nil {
-			break
+	// Slugを再生成する処理
+	var slug string
+	// `/redo`コマンドを使うため
+	for {
+		// 再生成の最大リトライ回数
+		const maxRetries = 10
+		var candidates []string
+		for i := range maxRetries {
+			fmt.Fprintln(r.writer, "Generating ...")
+			candidates, err = r.uc.GetCandidates(title)
+			if err == nil {
+				break
+			}
+			if !errors.Is(err, domain.ErrLLMResponseParse) && !errors.Is(err, domain.ErrInvalidSlugFormat) {
+				return fmt.Errorf("スラッグ生成エラー: %w", err)
+			}
+			if i < maxRetries-1 {
+				fmt.Fprintf(r.writer, "生成結果が不正でした。再生成します... (%d/%d)\n", i+1, maxRetries)
+			}
 		}
-		if !errors.Is(err, domain.ErrLLMResponseParse) && !errors.Is(err, domain.ErrInvalidSlugFormat) {
+		if err != nil {
 			return fmt.Errorf("スラッグ生成エラー: %w", err)
 		}
-		if i < maxRetries-1 {
-			fmt.Fprintf(r.writer, "生成結果が不正でした。再生成します... (%d/%d)\n", i+1, maxRetries)
-		}
-	}
-	if err != nil {
-		return fmt.Errorf("スラッグ生成エラー: %w", err)
-	}
 
-	slug, err := r.selectSlug(candidates)
-	if err != nil {
-		return err
+		slug, err = r.selectSlug(candidates)
+		if err != nil {
+			return err
+		}
+		if slug != "/redo" {
+			break
+		}
 	}
 
 	fmt.Fprintln(r.writer, "Executing Hugo Command ...")
@@ -106,10 +115,14 @@ func (r *Runner) selectSlug(candidates []string) (string, error) {
 	for i, s := range candidates {
 		fmt.Fprintf(r.writer, "    %d. %s\n", i+1, s)
 	}
-	fmt.Fprint(r.writer, "(入力する) > ")
+	fmt.Fprint(r.writer, "(/redo で再生成 / 入力する) > ")
 
 	input, _ := r.reader.ReadString('\n')
 	input = strings.TrimSpace(input)
+
+	if input == "/redo" {
+		return "/redo", nil
+	}
 
 	if num, err := strconv.Atoi(input); err == nil {
 		if num >= 1 && num <= len(candidates) {
