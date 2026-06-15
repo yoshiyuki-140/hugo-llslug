@@ -4,6 +4,35 @@
 
 Hugoの外部サブコマンド機構に対応しており、環境変数 `$PATH` に配置することで、 `hugo` のサブコマンドとして実行できます。
 
+## Install
+
+### Linux / Mac
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.sh | sh
+```
+
+### Windows
+
+#### x86_64 (default)
+
+```bash
+powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1 -OutFile install.ps1; .\install.ps1"
+```
+
+#### arm64
+
+```bash
+powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1 -OutFile install.ps1; .\install.ps1 -Arch arm64"
+```
+
+#### i386
+
+```bash
+powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1 -OutFile install.ps1; .\install.ps1 -Arch i386"
+```
+
+
 ## 使用方法
 
 ```bash
