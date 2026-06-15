@@ -39,7 +39,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hugo-llslug.yaml)")
-	rootCmd.Flags().String("model", "", "使用するOllamaモデル名 (default: qwen3.5:0.8b)")
+	rootCmd.Flags().String("model", "", "使用するOllamaモデル名 (default: liquidai/lfm2.5-350m:q4_0)")
 }
 
 func initConfig() {

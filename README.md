@@ -9,11 +9,11 @@ It can be executed as `hugo-llslug`.
 
 1. [Ollama](https://github.com/ollama/ollama) must be installed and running on your local machine.
 2. [Hugo](https://github.com/gohugoio/hugo) must be installed.
-3. A lightweight LLM model (Recommended: `qwen3.5:0.8b`, etc.) must be downloaded.
+3. A lightweight LLM model (Recommended: `liquidai/lfm2.5-350m:q4_0`, etc.) must be downloaded.
 
 ```bash
 # Download the recommended model
-ollama pull qwen3.5:0.8b
+ollama pull liquidai/lfm2.5-350m:q4_0
 
 ```
 

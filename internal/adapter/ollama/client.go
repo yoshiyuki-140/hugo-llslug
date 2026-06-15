@@ -44,7 +44,7 @@ func NewClient(modelName string) *LLMClient {
 // テスト時に CommandRunner を差し替えるためのコンストラクタ
 func NewClientWithRunner(modelName string, runner CommandRunner) *LLMClient {
 	if modelName == "" {
-		modelName = "qwen3.5:0.8b"
+		modelName = "liquidai/lfm2.5-350m:q4_0"
 	}
 	return &LLMClient{
 		modelName: modelName,

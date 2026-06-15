@@ -7,11 +7,11 @@
 
 1. [Ollama](https://github.com/ollama/ollama) がローカルマシンにインストールされ，起動していること．
 2. [hugo](https://github.com/gohugoio/hugo)がインストールされていること．
-3. 使用する軽量LLMモデル（推奨: `qwen3.5:0.8b` など）がダウンロードされていること．
+3. 使用する軽量LLMモデル（推奨: `liquidai/lfm2.5-350m:q4_0` など）がダウンロードされていること．
 
 ```bash
 # 推奨モデルのダウンロード
-ollama pull qwen3.5:0.8b
+ollama pull liquidai/lfm2.5-350m:q4_0
 ```
 
 ## インストール
