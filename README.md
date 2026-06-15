@@ -1,99 +1,102 @@
 # llslug (local-llm-slug)
 
-`llslug` は，ローカルLLMを活用して，日本語の記事タイトルからURLフレンドリーな英語のケバブケース（Slug）を自動生成する，Hugo専用のCLI拡張です．
-`hugo-llslug` として実行できます．
+[日本語READMEはこちら](./docs/README.ja.md)
 
-## 前提
+`llslug` is a CLI extension designed specifically for Hugo. It leverages local LLMs to automatically generate URL-friendly, English kebab-case slugs from Japanese article titles. 
+It can be executed as `hugo-llslug`.
 
-1. [Ollama](https://github.com/ollama/ollama) がローカルマシンにインストールされ，起動していること．
-2. [hugo](https://github.com/gohugoio/hugo)がインストールされていること．
-3. 使用する軽量LLMモデル（推奨: `qwen3.5:0.8b` など）がダウンロードされていること．
+## Prerequisites
+
+1. [Ollama](https://github.com/ollama/ollama) must be installed and running on your local machine.
+2. [Hugo](https://github.com/gohugoio/hugo) must be installed.
+3. A lightweight LLM model (Recommended: `qwen3.5:0.8b`, etc.) must be downloaded.
 
 ```bash
-# 推奨モデルのダウンロード
+# Download the recommended model
 ollama pull qwen3.5:0.8b
+
 ```
 
-## インストール
+## Installation
 
 ### Linux / macOS
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.sh | sh
+
 ```
 
 ### Windows (PowerShell)
-環境のアーキテクチャ（デフォルトは `x86_64`）に合わせて実行してください．
+
+Run the script matching your environment's architecture (Default is `x86_64`).
 
 ```powershell
-# x86_64 (標準)
+# x86_64 (Standard)
 powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1 -OutFile install.ps1; .\install.ps1"
 
-# arm64 / i386 を指定する場合（-Arch オプションを追加）
+# To specify arm64 / i386 (Append the -Arch option)
 # .\install.ps1 -Arch arm64
 ```
 
-## 使い方
+## Usage
 
-Hugoプロジェクトのルートディレクトリで実行します．
+Run the command in the root directory of your Hugo project.
 
 ```bash
-$ hugo-llslug
-追加したい記事のセクション名を選択もしくは入力してください．
-    (入力する) > 1<Enter>
-    1. posts
-    2. class
-
-追加したい記事のタイトルを入力してください．
-> ローカルLLMを利用してHugoのSlugを自動生成してくれるツールを作ってみた
+$ hugo-llslug 
+Please select or enter the section name for the new article.
+    1. class
+    2. posts
+(Manual Input) > 2
+Please enter the title of the article.
+> Building a Local LLM-Powered Slug Generator
 Generating ...
-
 Select following Slugs
-    (入力する) > 1<Enter>
-    1. hugo-slug-auto-generator-local-llm
-    2. hugo-slug-generator-local-llm
-    3. auto-generate-hugo-slug-with-local-llm
-    4. local-llm-hugo-slug-tool
-    5. hugo-local-llm-slug
-
+    1. local-llm-used-slug-generator-tool
+    2. create-global-slug-generation-tutorial
+    3. my-first-local-generate-slugs
+    4. global-slug-conversion-methods
+    5. hugo-cli-using-local-languages
+(`/redo` or Select Number) > 1
 Executing Hugo Command ...
-`hugo new posts/hugo-slug-auto-generator-local-llm/index.md`
+`hugo new posts/local-llm-used-slug-generator-tool/index.md`
 Completed !
 ```
 
-## ディレクトリ構造
+## Directory Structure
 
 ```bash
 hugo-llslug/
 ├── LICENSE
-├── Makefile                           # ビルド・インストール用タスク定義
+├── Makefile                           # Tasks for building and installation
 ├── README.md
 ├── go.mod
 ├── go.sum
-├── main.go                            # エントリポイント（cmd.Execute() の呼び出し）
+├── main.go                            # Entry point (calls cmd.Execute())
 │
-├── cmd/                               # Cobraコマンド定義（Presentation層）
-│   └── root.go                        # ルートコマンド定義・フラグ設定・DI
+├── cmd/                               # Cobra command definitions (Presentation Layer)
+│   └── root.go                        # Root command definition, flags setup, and DI
 │
-└── internal/                          # 外部非公開のプライベートロジック
-    ├── domain/                        # ビジネスルール・インターフェース定義
-    │   ├── errors.go                  # ドメインエラー定数
-    │   └── hugo.go                    # HugoExecutor / LLMClient のインターフェース
+└── internal/                          # Private logic encapsulated from external packages
+    ├── domain/                        # Business rules and interface definitions
+    │   ├── errors.go                  # Domain error constants
+    │   └── hugo.go                    # Interfaces for HugoExecutor and LLMClient
     │
-    ├── usecase/                       # アプリケーションロジック
+    ├── usecase/                       # Application business logic
     │   ├── prompts/
-    │   │   └── slug_generate_instruction.txt # LLM用システムプロンプト
-    │   ├── slug_generator.go          # タイトルからSlug候補を生成するユースケース
-    │   └── slug_generator_test.go     # ユースケースの単体テスト
+    │   │   └── slug_generate_instruction.txt # System prompt for LLM
+    │   ├── slug_generator.go          # Usecase to generate slug candidates from a title
+    │   └── slug_generator_test.go     # Unit tests for the usecase
     │
-    └── adapter/                       # 外部インフラ・技術駆動コードの実装
-        ├── cli/                       # インタラクティブUI（入出力）処理
-        │   ├── runner.go              # ユーザーとの対話フロー制御
-        │   └── runner_test.go         # 擬似入出力を用いたテスト
-        ├── hugo/                      # Hugo コマンド実行アダプタ
-        │   ├── executor.go            # `hugo new` を叩く実体
-        │   └── executor_test.go       # executor のテスト
-        └── ollama/                    # Ollama クライアント実装
-            ├── client.go              # OllamaのAPI/CLIを呼び出す実体
-            └── client_test.go         # API通信のモックテスト
+    └── adapter/                       # Infrastructure / tech-driven code implementations
+        ├── cli/                       # Interactive UI (Input/Output) handling
+        │   ├── runner.go              # Workflow control for user interaction
+        │   └── runner_test.go         # Tests using simulated I/O
+        ├── hugo/                      # Hugo command execution adapter
+        │   ├── executor.go            # Real implementation that triggers `hugo new`
+        │   └── executor_test.go       # Tests for the executor
+        └── ollama/                    # Ollama client implementation
+            ├── client.go              # Real implementation that calls Ollama API/CLI
+            └── client_test.go         # Mock communication tests for the API
+
 ```
