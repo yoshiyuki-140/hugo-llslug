@@ -61,7 +61,13 @@ func (c *LLMClient) GenerateSlugCandidates(systemPrompt string) ([]string, error
 
 	var slugRes slugResponse
 	if err := json.Unmarshal(out, &slugRes); err != nil {
-		return nil, fmt.Errorf("failed to parse llm response: %w", err)
+		return nil, fmt.Errorf("%w: %w", domain.ErrLLMResponseParse, err)
+	}
+
+	for _, s := range slugRes.Slugs {
+		if !IsKebabCase(s) {
+			return nil, fmt.Errorf("%w: %q", domain.ErrInvalidSlugFormat, s)
+		}
 	}
 	return slugRes.Slugs, nil
 }

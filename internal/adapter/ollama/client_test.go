@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yoshiyuki-140/hugo-llslug/internal/adapter/ollama"
+	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
 )
 
 func TestIsKebabCase(t *testing.T) {
@@ -42,6 +43,7 @@ func TestLLMClient_GenerateSlugCandidates(t *testing.T) {
 		runnerErr error
 		wantSlugs []string
 		wantErr   bool
+		wantErrIs error
 	}{
 		{
 			name:      "正常にスラッグ候補を返す",
@@ -54,9 +56,16 @@ func TestLLMClient_GenerateSlugCandidates(t *testing.T) {
 			wantErr:   true,
 		},
 		{
-			name:      "JSONパース失敗時はエラーを返す",
+			name:      "JSONパース失敗時はErrLLMResponseParseを返す",
 			runnerOut: []byte(`not json`),
 			wantErr:   true,
+			wantErrIs: domain.ErrLLMResponseParse,
+		},
+		{
+			name:      "ケバブケース以外のスラッグが含まれる場合はErrInvalidSlugFormatを返す",
+			runnerOut: []byte(`{"slugs":["valid-slug","InvalidSlug"]}`),
+			wantErr:   true,
+			wantErrIs: domain.ErrInvalidSlugFormat,
 		},
 	}
 
@@ -70,6 +79,9 @@ func TestLLMClient_GenerateSlugCandidates(t *testing.T) {
 			got, err := c.GenerateSlugCandidates("test prompt")
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GenerateSlugCandidates() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErrIs != nil && !errors.Is(err, tt.wantErrIs) {
+				t.Fatalf("GenerateSlugCandidates() error = %v, want errors.Is(%v)", err, tt.wantErrIs)
 			}
 			if !tt.wantErr {
 				if len(got) != len(tt.wantSlugs) {
