@@ -7,6 +7,34 @@ import (
 	"github.com/yoshiyuki-140/hugo-llslug/internal/adapter/ollama"
 )
 
+func TestIsKebabCase(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"slug", true},
+		{"slug-one", true},
+		{"hello-world-123", true},
+		{"a1b2-c3d4", true},
+		{"", false},
+		{"Slug", false},
+		{"SLUG", false},
+		{"slug_one", false},
+		{"-slug", false},
+		{"slug-", false},
+		{"slug--one", false},
+		{"slug one", false},
+		{"スラッグ", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ollama.IsKebabCase(tt.input); got != tt.want {
+				t.Errorf("IsKebabCase(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLLMClient_GenerateSlugCandidates(t *testing.T) {
 	tests := []struct {
 		name      string
