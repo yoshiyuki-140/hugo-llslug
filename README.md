@@ -3,10 +3,10 @@
 `llslug` は，ローカルLLMを活用して，日本語の記事タイトルからURLフレンドリーな英語のケバブケース（Slug）を自動生成する，Hugo専用のCLI拡張です．
 `hugo-llslug` として実行できます．
 
-## 📋 前提条件
+## 前提
 
-1. **Ollama** がローカルマシンにインストールされ，起動していること．
-2. `hugo`がインストールされていること．
+1. [Ollama](https://github.com/ollama/ollama) がローカルマシンにインストールされ，起動していること．
+2. [hugo](https://github.com/gohugoio/hugo)がインストールされていること．
 3. 使用する軽量LLMモデル（推奨: `qwen3.5:0.8b` など）がダウンロードされていること．
 
 ```bash
@@ -14,7 +14,7 @@
 ollama pull qwen3.5:0.8b
 ```
 
-## 📦 インストール
+## インストール
 
 ### Linux / macOS
 
@@ -33,7 +33,7 @@ powershell -Command "Invoke-WebRequest -Uri [https://raw.githubusercontent.com/y
 # .\install.ps1 -Arch arm64
 ```
 
-## 🛠 使い方
+## 使い方
 
 Hugoプロジェクトのルートディレクトリで実行します．
 
@@ -61,11 +61,9 @@ Executing Hugo Command ...
 Completed !
 ```
 
-## 📂 ディレクトリ構造
+## ディレクトリ構造
 
-本プロジェクトはクリーンアーキテクチャの思想に基づき，関心の分離を意識したディレクトリ構成になっています．
-
-```text
+```bash
 hugo-llslug/
 ├── LICENSE
 ├── Makefile                           # ビルド・インストール用タスク定義
