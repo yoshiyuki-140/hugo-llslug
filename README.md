@@ -19,7 +19,7 @@ ollama pull qwen3.5:0.8b
 ### Linux / macOS
 
 ```bash
-curl -fsSL [https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.sh](https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.sh) | sh
+curl -fsSL https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.sh | sh
 ```
 
 ### Windows (PowerShell)
@@ -27,7 +27,7 @@ curl -fsSL [https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/ins
 
 ```powershell
 # x86_64 (標準)
-powershell -Command "Invoke-WebRequest -Uri [https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1](https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1) -OutFile install.ps1; .\install.ps1"
+powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yoshiyuki-140/hugo-llslug/main/install.ps1 -OutFile install.ps1; .\install.ps1"
 
 # arm64 / i386 を指定する場合（-Arch オプションを追加）
 # .\install.ps1 -Arch arm64
