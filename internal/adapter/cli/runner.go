@@ -2,12 +2,14 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
 	"github.com/yoshiyuki-140/hugo-llslug/internal/usecase"
 )
 
@@ -43,8 +45,21 @@ func (r *Runner) Run() error {
 	title, _ := r.reader.ReadString('\n')
 	title = strings.TrimSpace(title)
 
-	fmt.Fprintln(r.writer, "Generating ...")
-	candidates, err := r.uc.GetCandidates(title)
+	const maxRetries = 3
+	var candidates []string
+	for i := range maxRetries {
+		fmt.Fprintln(r.writer, "Generating ...")
+		candidates, err = r.uc.GetCandidates(title)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, domain.ErrLLMResponseParse) && !errors.Is(err, domain.ErrInvalidSlugFormat) {
+			return fmt.Errorf("スラッグ生成エラー: %w", err)
+		}
+		if i < maxRetries-1 {
+			fmt.Fprintf(r.writer, "生成結果が不正でした。再生成します... (%d/%d)\n", i+1, maxRetries)
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("スラッグ生成エラー: %w", err)
 	}

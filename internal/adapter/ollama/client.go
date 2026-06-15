@@ -4,9 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"regexp"
 
 	"github.com/yoshiyuki-140/hugo-llslug/internal/domain"
 )
+
+var kebabCaseRegex = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+
+// IsKebabCase はスラッグがケバブケース形式か否かを返す。
+// 有効例: "slug", "slug-one", "hello-world-123"
+// 無効例: "Slug", "slug_one", "-slug", "slug-"
+func IsKebabCase(s string) bool {
+	return kebabCaseRegex.MatchString(s)
+}
 
 // Goでは「代入先がインターフェース型のとき、右辺の型がそのインターフェースを満たしていなければコンパイルエラー」という規則がある。
 var _ domain.LLMClient = (*LLMClient)(nil)
@@ -51,7 +61,13 @@ func (c *LLMClient) GenerateSlugCandidates(systemPrompt string) ([]string, error
 
 	var slugRes slugResponse
 	if err := json.Unmarshal(out, &slugRes); err != nil {
-		return nil, fmt.Errorf("failed to parse llm response: %w", err)
+		return nil, fmt.Errorf("%w: %w", domain.ErrLLMResponseParse, err)
+	}
+
+	for _, s := range slugRes.Slugs {
+		if !IsKebabCase(s) {
+			return nil, fmt.Errorf("%w: %q", domain.ErrInvalidSlugFormat, s)
+		}
 	}
 	return slugRes.Slugs, nil
 }

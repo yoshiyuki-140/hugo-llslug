@@ -9,6 +9,9 @@ var (
 	ErrEmptySelectedSlug   = errors.New("Slugが空")
 	ErrInvalidSectionName  = errors.New("セクション名にスラッシュ(`/`)等の文字は含められません")
 	ErrInvalidSelectedSlug = errors.New("Slugにスラッシュ(`/`)等の文字は含められません")
+	ErrInvalidSlugFormat   = errors.New("LLMが生成したスラッグがケバブケースではありません")
+	// LLMレスポンス系
+	ErrLLMResponseParse = errors.New("LLMのレスポンスのパースに失敗しました")
 	// ファイルロード系
 	ErrCantLoadSystemPrompt = errors.New("システムプロンプトが読み込めませんでした")
 )
