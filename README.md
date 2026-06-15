@@ -40,7 +40,7 @@ powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yo
 
 ## Usage
 
-![demo video](./docs/output.gif)
+![demo video](./docs/demo.gif)
 
 Run the command in the root directory of your Hugo project.
 

@@ -35,7 +35,7 @@ powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yo
 
 ## 使い方
 
-![demo video](./output.gif)
+![demo video](./demo.gif)
 
 Hugoプロジェクトのルートディレクトリで実行します．
 
