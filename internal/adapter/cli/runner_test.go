@@ -2,7 +2,6 @@ package cli_test
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/yoshiyuki-140/hugo-llslug/internal/adapter/cli"
@@ -30,13 +29,43 @@ func (m *mockHugoExecutor) CreateNewPost(section string, slug string) error {
 	return m.err
 }
 
+// mockPrompter は対話的な入力を差し替えるためのモック。
+// SelectSlug は呼び出しごとに slugResponses を順番に返す（/redo のテスト用）。
+type mockPrompter struct {
+	sectionResponse string
+	sectionErr      error
+	titleResponse   string
+	titleErr        error
+	slugResponses   []string
+	slugErr         error
+
+	slugCallCount int
+}
+
+func (m *mockPrompter) SelectSection(_ []string) (string, error) {
+	return m.sectionResponse, m.sectionErr
+}
+
+func (m *mockPrompter) InputTitle() (string, error) {
+	return m.titleResponse, m.titleErr
+}
+
+func (m *mockPrompter) SelectSlug(_ []string) (string, error) {
+	if m.slugErr != nil {
+		return "", m.slugErr
+	}
+	resp := m.slugResponses[m.slugCallCount]
+	m.slugCallCount++
+	return resp, nil
+}
+
 func TestRunner_Run(t *testing.T) {
 	defaultSlugs := []string{"slug-one", "slug-two", "slug-three", "slug-four", "slug-five"}
 	defaultSections := []string{"posts", "notes"}
 
 	tests := []struct {
 		name        string
-		input       string
+		prompter    *mockPrompter
 		sections    []string
 		slugs       []string
 		llmErr      error
@@ -46,48 +75,32 @@ func TestRunner_Run(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			name:        "セクションを番号で選択し、スラッグを番号で選択する",
-			input:       "1\ntest title\n1\n",
+			name:        "セクションとスラッグを選択する",
+			prompter:    &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"slug-one"}},
 			sections:    defaultSections,
 			slugs:       defaultSlugs,
 			wantSection: "posts",
 			wantSlug:    "slug-one",
 		},
 		{
-			name:        "セクションを番号で選択し、スラッグを3番で選択する",
-			input:       "2\ntest title\n3\n",
-			sections:    defaultSections,
-			slugs:       defaultSlugs,
-			wantSection: "notes",
-			wantSlug:    "slug-three",
-		},
-		{
-			name:        "セクションを直接入力する",
-			input:       "my-section\ntest title\n1\n",
+			name:        "セクションを手動入力する",
+			prompter:    &mockPrompter{sectionResponse: "my-section", titleResponse: "test title", slugResponses: []string{"slug-three"}},
 			sections:    defaultSections,
 			slugs:       defaultSlugs,
 			wantSection: "my-section",
-			wantSlug:    "slug-one",
+			wantSlug:    "slug-three",
 		},
 		{
-			name:        "スラッグを直接入力する",
-			input:       "1\ntest title\nmy-custom-slug\n",
+			name:        "スラッグを手動入力する",
+			prompter:    &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"my-custom-slug"}},
 			sections:    defaultSections,
 			slugs:       defaultSlugs,
 			wantSection: "posts",
 			wantSlug:    "my-custom-slug",
 		},
 		{
-			name:        "セクション一覧が空のとき直接入力になる",
-			input:       "blog\ntest title\n1\n",
-			sections:    []string{},
-			slugs:       defaultSlugs,
-			wantSection: "blog",
-			wantSlug:    "slug-one",
-		},
-		{
 			name:     "LLMがエラーを返すときRunはエラーを返す",
-			input:    "1\ntest title\n",
+			prompter: &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"slug-one"}},
 			sections: defaultSections,
 			slugs:    nil,
 			llmErr:   errMockLLM,
@@ -95,27 +108,34 @@ func TestRunner_Run(t *testing.T) {
 		},
 		{
 			name:     "hugoコマンドがエラーを返すときRunはエラーを返す",
-			input:    "1\ntest title\n1\n",
+			prompter: &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"slug-one"}},
 			sections: defaultSections,
 			slugs:    defaultSlugs,
 			hugoErr:  errMockHugo,
 			wantErr:  true,
 		},
 		{
-			name:        "/redoを入力すると再生成されその後番号で選択できる",
-			input:       "1\ntest title\n/redo\n2\n",
+			name:        "/redoを選ぶと再生成されその後選択できる",
+			prompter:    &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"/redo", "slug-two"}},
 			sections:    defaultSections,
 			slugs:       defaultSlugs,
 			wantSection: "posts",
 			wantSlug:    "slug-two",
 		},
 		{
-			name:        "/redoを複数回入力しても最終的に選択できる",
-			input:       "1\ntest title\n/redo\n/redo\n1\n",
+			name:        "/redoを複数回選んでも最終的に選択できる",
+			prompter:    &mockPrompter{sectionResponse: "posts", titleResponse: "test title", slugResponses: []string{"/redo", "/redo", "slug-one"}},
 			sections:    defaultSections,
 			slugs:       defaultSlugs,
 			wantSection: "posts",
 			wantSlug:    "slug-one",
+		},
+		{
+			name:     "セクション選択でエラーが起きるとRunはエラーを返す",
+			prompter: &mockPrompter{sectionErr: errMockAbort},
+			sections: defaultSections,
+			slugs:    defaultSlugs,
+			wantErr:  true,
 		},
 	}
 
@@ -128,9 +148,9 @@ func TestRunner_Run(t *testing.T) {
 			)
 			runner := cli.NewRunnerWithDeps(
 				uc,
-				strings.NewReader(tt.input),
 				&bytes.Buffer{},
 				func() []string { return tt.sections },
+				tt.prompter,
 			)
 
 			err := runner.Run()
@@ -150,8 +170,9 @@ func TestRunner_Run(t *testing.T) {
 }
 
 var (
-	errMockLLM  = mockError("llm error")
-	errMockHugo = mockError("hugo error")
+	errMockLLM   = mockError("llm error")
+	errMockHugo  = mockError("hugo error")
+	errMockAbort = mockError("abort error")
 )
 
 type mockError string
