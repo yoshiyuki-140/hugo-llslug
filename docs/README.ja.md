@@ -40,22 +40,32 @@ powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/yo
 Hugoプロジェクトのルートディレクトリで実行します．
 
 ```bash
-$ hugo-llslug 
+$ hugo-llslug
 Please select or enter the section name for the new article.
-    1. class
-    2. posts
-(Manual Input) > 2
+
+  class
+> posts
+  Enter a new section name
+
+↑/↓: move • enter: select • q: quit
 Please enter the title of the article.
-> ローカルLLM を使ったSlug生成ツールを作ってみた
+
+> タイトルからHugoのSlugを自動生成してくれるCLIツールを作ってみた! 
+
+enter: confirm • esc: quit
 Generating ...
-Select following Slugs
-    1. local-llm-used-slug-generator-tool
-    2. create-global-slug-generation-tutorial
-    3. my-first-local-generate-slugs
-    4. global-slug-conversion-methods
-    5. hugo-cli-using-local-languages
-(`/redo` or Select Number) > 1
+Select a slug for the new article.
+
+> hugo-automated
+  titled-hugo-generator
+  cli-hugo-tutorial
+  gen-hugo-slugs
+  automated-hugo
+  🔄 Regenerate candidates
+  Enter a custom slug
+
+↑/↓: move • enter: select • q: quit
 Executing Hugo Command ...
-`hugo new posts/local-llm-used-slug-generator-tool/index.md`
+`hugo new posts/hugo-automated/index.md`
 Completed !
 ```
