@@ -1,3 +1,6 @@
 hugo-llslug
 # Added by goreleaser init:
 dist/
+
+# Anthropic Claude Code
+.serena/
